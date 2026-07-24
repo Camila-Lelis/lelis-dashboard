@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0f1117">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<title>Lelis Fitness</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+<style>
+  :root {
+    --bg:#0f1117;--card:#1a1d2e;--card2:#212438;--border:#2e3250;
+    --accent:#6c8fff;--accent2:#ff6b8a;--accent3:#5dd9c1;--accent4:#ffbb44;
+    --text:#e8eaf6;--muted:#8b90b8;--green:#4ade80;--yellow:#facc15;--red:#f87171;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  body{background:var(--bg);color:var(--text);font-family:-apple-system,'Segoe UI',Roboto,sans-serif;
+    font-size:14px;padding-bottom:24px}
+  .header{padding:calc(16px + env(safe-area-inset-top)) 16px 12px;
+    background:linear-gradient(135deg,#1a1d2e,#212438);border-bottom:1px solid var(--border);
+    display:flex;justify-content:space-between;align-items:center}
+  .header h1{font-size:18px} .header h1 span{color:var(--accent)}
+  .header .upd{font-size:10px;color:var(--muted);text-align:right}
+  .main{padding:14px;max-width:900px;margin:0 auto}
+  /* Semáforo */
+  .semaforo{display:flex;align-items:center;gap:10px;background:var(--card);
+    border:1px solid #4ade8055;border-left:4px solid #4ade80;border-radius:12px;
+    padding:12px 14px;margin-bottom:12px}
+  .semaforo b{color:#4ade80;font-size:15px}
+  .semaforo p{font-size:12px;color:var(--muted);margin-top:2px}
+  /* Dicas */
+  .dicas{display:grid;gap:8px;margin-bottom:12px}
+  @media(min-width:700px){.dicas{grid-template-columns:1fr 1fr}}
+  .dica{background:var(--card);border:1px solid var(--border);border-radius:10px;
+    padding:10px 12px;display:flex;gap:10px;align-items:flex-start}
+  .dica.alert{border-left:3px solid var(--red)} .dica.warn{border-left:3px solid var(--yellow)}
+  .dica.good{border-left:3px solid var(--green)} .dica.info{border-left:3px solid var(--accent)}
+  .dica-ico{font-size:18px;flex-shrink:0}
+  .dica b{font-size:12px} .dica p{font-size:11px;color:var(--muted);line-height:1.5;margin-top:2px}
+  /* Chips */
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+  .chip{font-size:10px;font-weight:600;padding:5px 10px;border-radius:14px}
+  .chip.red{background:rgba(248,113,113,.15);color:var(--red);border:1px solid rgba(248,113,113,.35)}
+  .chip.yellow{background:rgba(250,204,21,.12);color:var(--yellow);border:1px solid rgba(250,204,21,.3)}
+  .chip.green{background:rgba(74,222,128,.12);color:var(--green);border:1px solid rgba(74,222,128,.3)}
+  /* KPIs */
+  .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
+  @media(min-width:700px){.kpis{grid-template-columns:repeat(6,1fr)}}
+  .kpi{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px}
+  .kpi .l{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+  .kpi .v{font-size:19px;font-weight:700;margin-top:2px}
+  .kpi .s{font-size:9px;color:var(--muted);margin-top:1px}
+  /* Seções */
+  section{margin-bottom:18px}
+  section h2{font-size:14px;font-weight:700;margin-bottom:10px;padding-left:10px}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:12px;
+    padding:12px;margin-bottom:10px}
+  .card h3{font-size:12px;font-weight:600;color:var(--muted);margin-bottom:8px}
+  .grid2{display:grid;gap:10px}
+  @media(min-width:700px){.grid2{grid-template-columns:1fr 1fr}}
+  .chart{position:relative;height:190px}
+  .chart.md{height:210px}
+  /* Treinos */
+  .tr-item{display:flex;gap:8px;align-items:flex-start;background:var(--card2);
+    border-radius:8px;padding:8px 10px;margin-bottom:6px}
+  .tr-dot{width:8px;height:8px;border-radius:50%;margin-top:5px;flex-shrink:0}
+  .tr-info{flex:1;min-width:0}
+  .tr-nome{font-size:12px;font-weight:600}
+  .tr-nome a{color:var(--accent);font-size:10px;text-decoration:none}
+  .tr-data{color:var(--muted);font-size:10px;font-weight:400}
+  .tr-meta{font-size:10px;color:var(--muted);margin-top:1px}
+  .tr-desc{font-size:10px;color:var(--muted);font-style:italic;margin-top:3px;line-height:1.4}
+  .tr-te{font-size:9px;font-weight:700;padding:2px 6px;border-radius:5px;white-space:nowrap}
+  /* Macros */
+  .macros{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px}
+  .macro{background:var(--card2);border-radius:8px;padding:8px;text-align:center}
+  .macro .v{font-size:16px;font-weight:700} .macro .l{font-size:9px;color:var(--muted)}
+  .metric-row{display:flex;justify-content:space-between;align-items:center;gap:8px;
+    padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:11px}
+  footer{text-align:center;font-size:10px;color:var(--muted);padding:16px}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🏃‍♀️ <span>Lelis</span> Fitness</h1>
+  <div class="upd">Atualizado<br><b>24/07/2026 04:35</b></div>
+</div>
+
+<div class="main">
+
+  <div class="semaforo">
+    <div>
+      <b>🟢 Pronta para treinar</b>
+      <p style="font-size:10px;color:var(--muted);margin-top:1px">Parecer da equipe — dados de treino, recuperação, nutrição e objetivos</p>
+      <p style="margin-top:5px;color:var(--text)">VFC estável em 42-43ms (dentro do baseline), sono consistente 8-9h com scores 77-88 e FC repouso 52-54bpm — recuperação sólida após a Kta Trail (21,8km/535 load, TE 5.0). Ciclo em fase folicular tardia/ovulatória (dia 25 desde 30/06 — janela favorável a intensidade e carga). A prioridade permanece nítida: SMM subiu de 25,9→26,3kg em ~1 mês (recuperando o custo do bloco de maratona), mas o consumo calórico segue abaixo do alvo de superávit.</p>
+      <p style="margin-top:6px"><b style="color:var(--text)">🏋️ Treino:</b> Treinar sim: janela ideal para força pesada de pernas (back squat/deadlift) ou LPO com intenção de velocidade, aproveitando a fase folicular e o TSB positivo. Evite metcon glicolítico longo hoje se for treinar corrida amanhã — priorize a carga axial que serve ao objetivo de massa.</p><p style="margin-top:4px"><b style="color:var(--text)">🍽️ Nutrição:</b> Dia de força = alvo 2600-2850 kcal com 5-6 g/kg de carbo (~300g) e 115-120g proteína; o consumo médio da janela (~1900-2000 kcal) está ~500-700 kcal abaixo do superávit necessário para ganho de massa magra.</p>
+    </div>
+  </div>
+
+  <div class="dicas">
+<div class="dica alert">
+      <span class="dica-ico">🍽️</span>
+      <div><b>Superávit real está faltando</b><p>Consumo médio de ~1950 kcal contra gasto total de 2300-3000 kcal em dias de treino é déficit, não superávit. Ganho de massa magra exige +5-10% acima da manutenção (~2600-2850 kcal em dia de treino) — adicione arroz+feijão, batata-doce e uma dose extra de proteína nas refeições principais.</p></div>
+    </div>
+<div class="dica good">
+      <span class="dica-ico">🏋️</span>
+      <div><b>Aproveitar a janela folicular</b><p>Ciclo no ~dia 25 (fase folicular tardia/ovulatória): melhor resposta anabólica e tolerância a carga alta. Com TSB positivo e VFC em 42ms, hoje é dia de puxar back squat ou deadlift pesado com RIR 1-2 — o driver direto do objetivo de recuperar os 27,4kg de SMM.</p></div>
+    </div>
+<div class="dica warn">
+      <span class="dica-ico">⚠️</span>
+      <div><b>Lombar sob vigilância</b><p>No ladder de burpee box jump + deadlift a lombar ficou 'bem dolorida' (RPE 9, carga 70kg), e no AMRAP seguinte 'fadigou rápido'. Se ainda houver qualquer desconforto axial, priorize front squat ou trabalho unilateral hoje; carga axial pesada só com lombar 100%.</p></div>
+    </div>
+<div class="dica info">
+      <span class="dica-ico">🏃</span>
+      <div><b>Corrida em bom momento de forma</b><p>Melhor trecho de 5k real caiu para 24:12 (Evening Run) e previsão estável em ~21:19 — forma aeróbia preservada mesmo com foco em força. Mantenha corrida a 80% em Z1-Z2 (5:40-6:20); reserve 1-2 sessões de qualidade/semana com foco em subida para a IbitRun (29 dias, 400m D+).</p></div>
+    </div>
+<div class="dica good">
+      <span class="dica-ico">💪</span>
+      <div><b>Recomposição já responde</b><p>SMM subiu 25,9→26,3kg e gordura caiu 17,0→15,9% em ~1 mês desde o fim da maratona — tendência correta. Fechar o gap calórico acelera essa curva; a base de recuperação (sono 8h+, VFC estável) está pronta para sustentar mais volume de força.</p></div>
+    </div>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi"><div class="l">Corrida</div><div class="v" style="color:var(--accent)">72</div><div class="s">941 km</div></div>
+    <div class="kpi"><div class="l">CrossFit</div><div class="v" style="color:var(--accent2)">77</div><div class="s">sessões</div></div>
+    <div class="kpi"><div class="l">Força</div><div class="v" style="color:var(--accent3)">32</div><div class="s">sessões</div></div>
+    <div class="kpi"><div class="l">Sono 7d</div><div class="v" style="color:var(--accent)">80</div><div class="s">score médio</div></div>
+    <div class="kpi"><div class="l">Body Battery</div><div class="v" style="color:var(--accent4)">83</div><div class="s">máx médio 7d</div></div>
+    <div class="kpi"><div class="l">VFC 7d</div><div class="v" style="color:var(--green)">42</div><div class="s">✓ equilibrada</div></div>
+  </div>
+
+  <section>
+    <h2 style="border-left:3px solid var(--accent2)">🚀 Performance</h2>
+    <div class="kpis" style="grid-template-columns:repeat(3,1fr)">
+      <div class="kpi"><div class="l">VO2máx</div><div class="v" style="color:var(--accent3)">51.0</div><div class="s">ml/kg/min</div></div>
+      <div class="kpi"><div class="l">Status Treino</div><div class="v" style="color:var(--accent);font-size:15px">—</div><div class="s">Garmin Training Status</div></div>
+      <div class="kpi"><div class="l">Readiness</div><div class="v" style="color:var(--accent4)">—</div><div class="s">prontidão 0-100</div></div>
+      <div class="kpi"><div class="l">Endurance</div><div class="v" style="color:var(--accent)">—</div><div class="s">pontuação resistência</div></div>
+      <div class="kpi"><div class="l">Hill Score</div><div class="v" style="color:var(--accent2)">—</div><div class="s">pontuação subida</div></div>
+    </div>
+    <div class="card"><h3>VO2máx — evolução (estimado por corrida)</h3><div class="chart"><canvas id="cVo2"></canvas></div></div>
+  </section>
+
+  <section>
+    <h2 style="border-left:3px solid var(--accent)">🏃 Atividades</h2>
+    <div class="grid2">
+      <div class="card"><h3>Sessões por tipo de treino — 02/01 a 23/07</h3><div class="chart"><canvas id="cLoad"></canvas></div></div>
+      <div class="card"><h3>Últimos 10 treinos</h3>
+<div class="tr-item">
+      <span class="tr-dot" style="background:#a78bfa"></span>
+      <div class="tr-info">
+        <div class="tr-nome">Força <span class="tr-data">23/07</span> <a href="https://www.strava.com/activities/19433932111" target="_blank">strava ↗</a></div>
+        <div class="tr-meta">FC 95 · Load 5</div>
+        
+      </div>
+      <span class="tr-te" style="background:#4ade8022;color:#4ade80" title="Training Effect Aeróbico Garmin (0-5)">Efeito 0.3/5</span>
+    </div>
+<div class="tr-item">
+      <span class="tr-dot" style="background:#6c8fff"></span>
+      <div class="tr-info">
+        <div class="tr-nome">Corrida <span class="tr-data">22/07</span> <a href="https://www.strava.com/activities/19424706094" target="_blank">strava ↗</a></div>
+        <div class="tr-meta">9.01km · 5:14/km · FC 154 · Load 174</div>
+        
+      </div>
+      <span class="tr-te" style="background:#6c8fff22;color:#6c8fff" title="Training Effect Aeróbico Garmin (0-5)">Efeito 3.9/5</span>
+    </div>
+<div class="tr-item">
+      <span class="tr-dot" style="background:#8b90b8"></span>
+      <div class="tr-info">
+        <div class="tr-nome">multi_sport <span class="tr-data">22/07</span> <a href="https://www.strava.com/activities/19420066184" target="_blank">strava ↗</a></div>
+        <div class="tr-meta">Load 18</div>
+        
+      </div>
+      <span class="tr-te" style="background:#4ade8022;color:#4ade80" title="Training Effect Aeróbico Garmin (0-5)">Efeito 0.7/5</span>
+    </div>
+<div class="tr-item">
+      <span class="tr-dot" style="background:#a78bfa"></span>
+      <div class="tr-info">
+        <div class="tr-nome">Força <span class="tr-data">21/07</span> <a href="https://www.strava.com/activities/19405174578" target="_blank">strava ↗</a></div>
+        <div class="tr-meta">FC 91 · Load 23</div>
+        
+      </div>
+      <span class="tr-te" style="background:#4ade8022;color:#4ade80" title="Training Effect Aeróbico Garmin (0-5)">Efeito 0.4/5</span>
+    </div>
+<div class="tr-item">
+      <span class="tr-dot" style="background:#ff6b8a"></span>
+      <div class="tr-info">
+        <div class="tr-nome">CrossFit <span class="tr-data">21/07</span> <a href="https://www.strava.com/activities/19402286600" target="_blank">strava ↗</a></div>
+        <div class="tr-meta">FC 111 · Load 119</div>
+        
+      </div>
+      <span class="tr-te" style="background:#6c8fff22;color:#6c8fff" title="Training Effect Aeróbico Garmin (0-5)">Efeito 3.0/5</span>
+    </div>
+<div class="tr-item">
+      <span class="tr-dot" style="background:#6c8fff"></span>
+      <div class="tr-info">
+        <div class="tr-nome">Corrida <span class="tr-data">18/07</span> <a href="https://www.strava.com/activities/19363332869" target="_blank">strava ↗</a></div>
+        <div class="tr-meta">21.81km · 7:00/km · FC 161 · Load 535</div>
+        
+      </div>
+      <span class="tr-te" style="background:#f8717122;color:#f87171" title="Training Effect Aeróbico Garmin (0-5)">Efeito 5.0/5</span>
+    </div>
+<div class="tr-item">
+      <span class="tr-dot" style="background:#ff6b8a"></span>
+      <div class="tr-info">
+        <div class="tr-nome">CrossFit <span class="tr-data">16/07</span> <a href="https://www.strava.com/activities/19338557975" target="_blank">strava ↗</a></div>
+        <div class="tr-meta">FC 105 · Load 29</div>
+        <div class="tr-desc">Power Clean (2x3rep / 2x2reps / 4x1rep)<br><span style="color:var(--accent3);font-style:normal">Resultado: fiz 1 rep de 75kg 2 vezes · Carga: 75kg · RPE 6</span></div>
+      </div>
+      <span class="tr-te" style="background:#4ade8022;color:#4ade80" title="Training Effect Aeróbico Garmin (0-5)">Efeito 1.1/5</span>
+    </div>
+<div class="tr-item">
+      <span class="tr-dot" style="background:#6c8fff"></span>
+      <div class="tr-info">
+        <div class="tr-nome">Corrida <span class="tr-data">15/07</span> <a href="https://www.strava.com/activities/19329289786" target="_blank">strava ↗</a></div>
+        <div class="tr-meta">6.02km · 5:55/km · FC 142 · Load 97</div>
+        <div class="tr-desc">RPE 5</div>
+      </div>
+      <span class="tr-te" style="background:#6c8fff22;color:#6c8fff" title="Training Effect Aeróbico Garmin (0-5)">Efeito 3.2/5</span>
+    </div>
+<div class="tr-item">
+      <span class="tr-dot" style="background:#ff6b8a"></span>
+      <div class="tr-info">
+        <div class="tr-nome">CrossFit <span class="tr-data">14/07</span> <a href="https://www.strava.com/activities/19308255670" target="_blank">strava ↗</a></div>
+        <div class="tr-meta">FC 123 · Load 141</div>
+        <div class="tr-desc">2min max reps de deadlifit com 70kh + 19min de amrap (4 strict pull up + 11 box jumpo 60cm + 13 hand release push up + 15 burpees) + 2min max de reps de deadlift 70kg<br><span style="color:var(--accent3);font-style:normal">Resultado: 25 deadlifts + 6rounds completos mais 4 11 e 3 do round 7 + 28 deadlifts · Carga: 70kg · RPE 8</span></div>
+      </div>
+      <span class="tr-te" style="background:#6c8fff22;color:#6c8fff" title="Training Effect Aeróbico Garmin (0-5)">Efeito 3.3/5</span>
+    </div>
+<div class="tr-item">
+      <span class="tr-dot" style="background:#6c8fff"></span>
+      <div class="tr-info">
+        <div class="tr-nome">Corrida <span class="tr-data">13/07</span> <a href="https://www.strava.com/activities/19301269075" target="_blank">strava ↗</a></div>
+        <div class="tr-meta">6.01km · 5:12/km · FC 152 · Load 139</div>
+        <div class="tr-desc">RPE 7</div>
+      </div>
+      <span class="tr-te" style="background:#6c8fff22;color:#6c8fff" title="Training Effect Aeróbico Garmin (0-5)">Efeito 3.6/5</span>
+    </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2 style="border-left:3px solid var(--accent4)">🍽️ Alimentação</h2>
+    <div class="card">
+      <h3>Médias últimos 7 dias</h3>
+      <div class="macros" style="grid-template-columns:repeat(5,1fr)">
+        <div class="macro"><div class="v" style="color:var(--accent4)">2039</div><div class="l">kcal consumida</div></div>
+        <div class="macro"><div class="v" style="color:var(--accent2)">1875</div><div class="l">kcal gasta (Garmin)</div></div>
+        <div class="macro"><div class="v" style="color:var(--accent2)">106g</div><div class="l">proteína</div></div>
+        <div class="macro"><div class="v" style="color:var(--accent)">349g</div><div class="l">carbo</div></div>
+        <div class="macro"><div class="v" style="color:var(--accent3)">28g</div><div class="l">gordura</div></div>
+      </div>
+      <h3>Consumido × Gasto (últimos 45 dias)</h3>
+      <div class="chart md"><canvas id="cCal"></canvas></div>
+    </div>
+    <div class="grid2">
+      <div class="card"><h3>Proteína diária × meta 112g (2g/kg)</h3>
+        <div class="chart"><canvas id="cProt"></canvas></div></div>
+      <div class="card"><h3>Carboidrato diário × referência 224g (4g/kg)</h3>
+        <div class="chart"><canvas id="cCarb"></canvas></div></div>
+      <div class="card"><h3>Gordura diária × mínimo 45g (0,8g/kg — saúde hormonal)</h3>
+        <div class="chart"><canvas id="cGord"></canvas></div></div>
+    </div>
+    <p style="font-size:10px;color:var(--muted);margin-top:6px">Barras hachuradas (riscos diagonais) = sábado ou domingo.</p>
+  </section>
+
+  <section>
+    <h2 style="border-left:3px solid var(--accent3)">💚 Recuperação</h2>
+    <div class="grid2">
+      <div class="card"><h3>Sono (30d) — barras = horas · linha branca = score (linhas de referência: 60/70/80)</h3><div class="chart md"><canvas id="cSono"></canvas></div></div>
+      <div class="card"><h3>VFC — média 7d × zona equilibrada (60d)</h3><div class="chart md"><canvas id="cHrv"></canvas></div></div>
+    </div>
+    <p style="font-size:10px;color:var(--muted);margin-top:6px">Estresse e Body Battery seguem monitorados pela equipe (parecer e dicas) — sem gráficos para não poluir.</p>
+  </section>
+
+
+  <section>
+    <h2 style="border-left:3px solid var(--muted)">📋 Perfil Base das Análises</h2>
+    <div class="grid2">
+      <div class="card">
+        <h3>Dados corporais — bioimpedância de 17/07/2026</h3>
+        <div class="macros" style="grid-template-columns:repeat(3,1fr)">
+          <div class="macro"><div class="v">34</div><div class="l">idade</div></div>
+          <div class="macro"><div class="v">55.5kg</div><div class="l">peso</div></div>
+          <div class="macro"><div class="v">15.9%</div><div class="l">gordura</div></div>
+          <div class="macro"><div class="v">26.3kg</div><div class="l">massa muscular</div></div>
+          <div class="macro"><div class="v">1378</div><div class="l">TMB medida (kcal)</div></div>
+          <div class="macro"><div class="v">34.2L</div><div class="l">água corporal</div></div>
+        </div>
+        <h3 style="margin-top:12px">Metas nutricionais diárias (metodologia: TMB medida × PAL 1,7-1,85 + superávit 5-10%)</h3>
+        <div class="macros" style="grid-template-columns:repeat(2,1fr)">
+          <div class="macro"><div class="v" style="color:var(--accent4)">2343-2549</div><div class="l">manutenção (kcal)</div></div>
+          <div class="macro"><div class="v" style="color:var(--green)">2460-2804</div><div class="l">alvo dias de treino (kcal)</div></div>
+          <div class="macro"><div class="v" style="color:var(--accent2)">112-123g</div><div class="l">proteína (~17%) · 2-2,2g/kg</div></div>
+          <div class="macro"><div class="v" style="color:var(--accent)">224-340g</div><div class="l">carbo (~50%) · 4-6g/kg treino</div></div>
+          <div class="macro"><div class="v" style="color:var(--accent3)">60-75g</div><div class="l">gordura (~25%) · ≥0,8g/kg</div></div>
+          <div class="macro"><div class="v">&gt;2165</div><div class="l">piso kcal (RED-S, 45kcal/kg FFM)</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Massa magra segmentar — 17/07/2026 <span style="color:var(--muted);font-weight:400">(Δ vs 18/06/26)</span></h3>
+        
+    <svg viewBox="0 0 320 330" style="max-width:340px;margin:2px auto 0;display:block">
+      <defs>
+        <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="1.5" stdDeviation="2.5" flood-color="#000" flood-opacity=".45"/>
+        </filter>
+      </defs>
+
+      <!-- corpo (segmentos coloridos pela direção da mudança) -->
+      <g stroke-width="1.6" filter="url(#soft)">
+        <circle cx="160" cy="34" r="17" fill="#212438" stroke="rgba(139,144,184,.4)"/>
+        <path d="M160,51 L160,60" stroke="rgba(139,144,184,.4)" fill="none" stroke-width="8" stroke-linecap="round"/>
+        <!-- tronco: ombros → cintura → quadril -->
+        <path fill="rgba(74,222,128,.22)" stroke="rgba(74,222,128,.65)"
+          d="M129,64 Q160,55 191,64 C196,84 193,100 186,112 C182,120 182,126 186,134
+             Q192,144 190,153 L130,153 Q128,144 134,134 C138,126 138,120 134,112
+             C127,100 124,84 129,64 Z"/>
+        <!-- braços levemente abertos -->
+        <g fill="rgba(74,222,128,.22)" stroke="rgba(74,222,128,.65)" transform="rotate(9 122 66)">
+          <path d="M115,64 Q122,60 127,66 L124,148 Q123,157 116,157 Q109,157 109,148 L112,72 Q112,66 115,64 Z"/>
+        </g>
+        <g fill="rgba(74,222,128,.22)" stroke="rgba(74,222,128,.65)" transform="rotate(-9 198 66)">
+          <path d="M193,66 Q198,60 205,64 Q208,66 208,72 L211,148 Q211,157 204,157 Q197,157 196,148 Z"/>
+        </g>
+        <!-- pernas: coxa afinando ao tornozelo -->
+        <path fill="rgba(248,113,113,.20)" stroke="rgba(248,113,113,.60)"
+          d="M133,157 L157,157 C158,196 155,240 150,281 Q149,290 141,290 Q134,290 133,281
+             C128,240 129,196 133,157 Z"/>
+        <path fill="rgba(74,222,128,.22)" stroke="rgba(74,222,128,.65)"
+          d="M163,157 L187,157 C191,196 192,240 187,281 Q186,290 179,290 Q171,290 170,281
+             C165,240 162,196 163,157 Z"/>
+      </g>
+
+      <!-- linhas-guia -->
+      <g stroke="rgba(139,144,184,.45)" stroke-width="1" stroke-dasharray="2,2">
+        <line x1="76"  y1="86"  x2="112" y2="95"/>
+        <line x1="244" y1="86"  x2="208" y2="95"/>
+        <line x1="244" y1="32"  x2="182" y2="90"/>
+        <line x1="76"  y1="226" x2="140" y2="215"/>
+        <line x1="244" y1="226" x2="180" y2="215"/>
+      </g>
+      <g fill="rgba(139,144,184,.6)">
+        <circle cx="112" cy="95"  r="2.2"/><circle cx="208" cy="95"  r="2.2"/>
+        <circle cx="182" cy="90"  r="2.2"/>
+        <circle cx="140" cy="215" r="2.2"/><circle cx="180" cy="215" r="2.2"/>
+      </g>
+
+      <!-- badges -->
+      
+      <g>
+        <rect x="10" y="64" width="64" height="46" rx="9" fill="#161a2b"
+              stroke="#4ade80" stroke-width="1.3" opacity=".95"/>
+        <text x="42" y="76" text-anchor="middle" fill="#8b90b8"
+              font-size="7.5" letter-spacing=".5">BRAÇO E</text>
+        <text x="42" y="92" text-anchor="middle" fill="#e8eaf6"
+              font-size="13.5" font-weight="700">2.48<tspan font-size="8" fill="#8b90b8"> kg</tspan></text>
+        <text x="42" y="104" text-anchor="middle" fill="#4ade80"
+              font-size="9.5" font-weight="700">+0.13</text>
+      </g>
+      
+      <g>
+        <rect x="246" y="64" width="64" height="46" rx="9" fill="#161a2b"
+              stroke="#4ade80" stroke-width="1.3" opacity=".95"/>
+        <text x="278" y="76" text-anchor="middle" fill="#8b90b8"
+              font-size="7.5" letter-spacing=".5">BRAÇO D</text>
+        <text x="278" y="92" text-anchor="middle" fill="#e8eaf6"
+              font-size="13.5" font-weight="700">2.46<tspan font-size="8" fill="#8b90b8"> kg</tspan></text>
+        <text x="278" y="104" text-anchor="middle" fill="#4ade80"
+              font-size="9.5" font-weight="700">+0.07</text>
+      </g>
+      
+      <g>
+        <rect x="246" y="8" width="64" height="46" rx="9" fill="#161a2b"
+              stroke="#4ade80" stroke-width="1.3" opacity=".95"/>
+        <text x="278" y="20" text-anchor="middle" fill="#8b90b8"
+              font-size="7.5" letter-spacing=".5">TRONCO</text>
+        <text x="278" y="36" text-anchor="middle" fill="#e8eaf6"
+              font-size="13.5" font-weight="700">21<tspan font-size="8" fill="#8b90b8"> kg</tspan></text>
+        <text x="278" y="48" text-anchor="middle" fill="#4ade80"
+              font-size="9.5" font-weight="700">+0.6</text>
+      </g>
+      
+      <g>
+        <rect x="10" y="204" width="64" height="46" rx="9" fill="#161a2b"
+              stroke="#f87171" stroke-width="1.3" opacity=".95"/>
+        <text x="42" y="216" text-anchor="middle" fill="#8b90b8"
+              font-size="7.5" letter-spacing=".5">PERNA E</text>
+        <text x="42" y="232" text-anchor="middle" fill="#e8eaf6"
+              font-size="13.5" font-weight="700">6.91<tspan font-size="8" fill="#8b90b8"> kg</tspan></text>
+        <text x="42" y="244" text-anchor="middle" fill="#f87171"
+              font-size="9.5" font-weight="700">-0.05</text>
+      </g>
+      
+      <g>
+        <rect x="246" y="204" width="64" height="46" rx="9" fill="#161a2b"
+              stroke="#4ade80" stroke-width="1.3" opacity=".95"/>
+        <text x="278" y="216" text-anchor="middle" fill="#8b90b8"
+              font-size="7.5" letter-spacing=".5">PERNA D</text>
+        <text x="278" y="232" text-anchor="middle" fill="#e8eaf6"
+              font-size="13.5" font-weight="700">7.1<tspan font-size="8" fill="#8b90b8"> kg</tspan></text>
+        <text x="278" y="244" text-anchor="middle" fill="#4ade80"
+              font-size="9.5" font-weight="700">+0</text>
+      </g>
+
+      <text x="160" y="322" text-anchor="middle" fill="#8b90b8" font-size="8.5">
+        massa magra por segmento (kg) · Δ vs exame anterior
+      </text>
+    </svg>
+      </div>
+      <div class="card">
+        <h3>Histórico da composição corporal — todos os exames</h3>
+        <div class="chart md"><canvas id="cBio"></canvas></div>
+      </div>
+      <div class="card">
+        <h3>🎯 Objetivo do período</h3>
+        <p style="font-size:12px;color:var(--text);margin-bottom:10px">
+          <b>Ganho de força e massa magra no CrossFit</b> (recuperar o pico de 27,4 kg de massa muscular de jan/26)
+          <span style="color:var(--muted)">· corrida a serviço do calendário de provas (trilhas e Hyrox)</span>
+        </p>
+        <h3>🏁 Calendário de provas</h3>
+        <div class="metric-row"><span style="color:var(--text)">22/08 — <b>IbitRun</b> <span style="color:var(--muted);font-size:10px">(10km trilha · D+ 400m)</span></span><span style="color:var(--muted);font-weight:700">em 29d</span></div><div class="metric-row"><span style="color:var(--text)">11/10 — <b>NB RJ</b> <span style="color:var(--muted);font-size:10px">(15km asfalto)</span></span><span style="color:var(--muted);font-weight:700">em 79d</span></div><div class="metric-row"><span style="color:var(--text)">21/11 — <b>Hyrox RJ</b> <span style="color:var(--muted);font-size:10px">(8km hyrox · Open)</span></span><span style="color:var(--muted);font-weight:700">em 120d</span></div>
+        <p style="font-size:10px;color:var(--muted);margin-top:10px">
+          Para ajustar estes dados: nova bioimpedância → foto na pasta do Drive ·
+          provas → calendario_provas.json (Drive/Historico) · metas → perfis/ no GitHub
+        </p>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<footer>Garmin · Strava · FatSecret · Planilha — pipeline automático diário<br>
+Análise: IA (Claude) · 2026-07-24</footer>
+
+<script>
+Chart.defaults.color='#8b90b8';Chart.defaults.borderColor='#2e3250';
+Chart.defaults.font.size=10;Chart.defaults.font.family='-apple-system,Segoe UI,sans-serif';
+
+// Fim de semana nos gráficos de alimentação (alinhado com cal_labels)
+const FDS_ALIM = [false, false, true, true, false, false, false, false, false, true, true, false, false, false, false, false, true, true, false, false, false, false, false, true, true, false, false, false, false, false];
+
+// Padrão hachurado: cor base + riscos diagonais finos (destaque de sáb/dom)
+const _hachuraCache = {};
+function hachura(cor) {
+  if (_hachuraCache[cor]) return _hachuraCache[cor];
+  const c = document.createElement('canvas'); c.width = 7; c.height = 7;
+  const g = c.getContext('2d');
+  g.fillStyle = cor; g.fillRect(0, 0, 7, 7);
+  g.strokeStyle = 'rgba(255,255,255,.55)'; g.lineWidth = 1;
+  g.beginPath(); g.moveTo(-2, 9); g.lineTo(9, -2); g.stroke();
+  g.beginPath(); g.moveTo(-2, 2); g.lineTo(2, -2); g.stroke();
+  return _hachuraCache[cor] = g.createPattern(c, 'repeat');
+}
+function corFds(cores) {
+  return cores.map((c, i) => FDS_ALIM[i] ? hachura(c) : c);
+}
+
+new Chart(document.getElementById('cVo2'),{type:'line',
+ data:{labels:["02/01", "03/01", "06/01", "08/01", "10/01", "12/01", "13/01", "14/01", "16/01", "19/01", "25/01", "26/01", "27/01", "30/01", "04/02", "05/02", "09/02", "10/02", "12/02", "14/02", "17/02", "19/02", "23/02", "25/02", "28/02", "04/03", "08/03", "10/03", "15/03", "17/03", "21/03", "30/03", "02/04", "04/04", "09/04", "11/04", "14/04", "16/04", "20/04", "25/04", "26/04", "06/05", "11/05", "13/05", "14/05", "16/05", "18/05", "23/05", "25/05", "28/05", "30/05", "01/06", "03/06", "05/06", "07/06", "15/06", "17/06", "21/06", "03/07", "05/07", "08/07", "13/07", "15/07", "18/07", "22/07"],datasets:[{label:'VO2máx',data:[53.0, 53.0, 53.0, 53.0, 52.0, 52.0, 53.0, 53.0, 53.0, 53.0, 53.0, 53.0, 53.0, 53.0, 53.0, 53.0, 52.0, 52.0, 52.0, 52.0, 52.0, 52.0, 52.0, 52.0, 52.0, 52.0, 52.0, 52.0, 51.0, 51.0, 51.0, 51.0, 51.0, 51.0, 52.0, 52.0, 52.0, 52.0, 52.0, 52.0, 52.0, 52.0, 51.0, 51.0, 51.0, 51.0, 50.0, 50.0, 50.0, 51.0, 51.0, 51.0, 51.0, 51.0, 50.0, 51.0, 51.0, 51.0, 50.0, 50.0, 50.0, 51.0, 51.0, 50.0, 51.0],
+  borderColor:'#5dd9c1',backgroundColor:'rgba(93,217,193,.08)',borderWidth:2,
+  pointRadius:0,tension:.3,fill:true}]},
+ options:{responsive:true,maintainAspectRatio:false,
+  plugins:{legend:{display:false}},
+  scales:{x:{ticks:{maxTicksLimit:8,maxRotation:0},grid:{display:false}},
+   y:{grid:{color:'#2e3250'},ticks:{stepSize:1}}}}});
+
+new Chart(document.getElementById('cLoad'),{type:'bar',
+ data:{labels:["Corrida", "Esteira", "CrossFit", "Força", "Ciclismo", "HIIT"],datasets:[{data:[67, 5, 77, 32, 2, 1],
+  backgroundColor:["#6c8fffb0", "#34d399b0", "#ff6b8ab0", "#a78bfab0", "#5dd9c1b0", "#fb923cb0"],borderRadius:4}]},
+ options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+  plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+c.parsed.x+' sessões'}}},
+  scales:{x:{grid:{color:'#2e3250'},ticks:{precision:0}},y:{grid:{display:false}}}}});
+
+new Chart(document.getElementById('cCal'),{type:'bar',
+ data:{labels:["16/06", "19/06", "20/06", "21/06", "22/06", "23/06", "24/06", "25/06", "26/06", "27/06", "28/06", "29/06", "30/06", "01/07", "02/07", "03/07", "04/07", "05/07", "06/07", "07/07", "08/07", "09/07", "10/07", "11/07", "12/07", "13/07", "14/07", "15/07", "16/07", "17/07"],datasets:[
+  {label:'Consumido',data:[1640, 1887, 1869, 1631, 1720, 1724, 1679, 1724, 1698, 2142, 1844, 1821, 1668, 1712, 1599, 1785, 1624, 1478, 1698, 1691, 1629, 1667, 1879, 2508, 1729, 1923, 1993, 1898, 2002, 2039],
+   backgroundColor:corFds([1640, 1887, 1869, 1631, 1720, 1724, 1679, 1724, 1698, 2142, 1844, 1821, 1668, 1712, 1599, 1785, 1624, 1478, 1698, 1691, 1629, 1667, 1879, 2508, 1729, 1923, 1993, 1898, 2002, 2039].map(()=>'rgba(255,187,68,.6)')),borderRadius:3},
+  {label:'Gasto',type:'line',data:[1034.0, 760.0, 974.0, 2125.0, 1670.0, 1858.0, 1905.0, 1964.0, 1851.0, 1560.0, 1550.0, 1896.0, 1708.0, 1937.0, 1529.0, 1996.0, 1530.0, 2086.0, 1779.0, 1708.0, 1960.0, 1552.0, 1536.0, 1536.0, 1608.0, 2164.0, 1878.0, 1877.0, 1780.0, 1568.0],borderColor:'#ff6b8a',borderWidth:2,pointRadius:2,tension:.3}]},
+ options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+  plugins:{legend:{position:'top',labels:{boxWidth:8,padding:8}}},
+  scales:{x:{ticks:{maxTicksLimit:9,maxRotation:0},grid:{display:false}},
+   y:{grid:{color:'#2e3250'},ticks:{callback:v=>(v/1000).toFixed(1)+'k'}}}}});
+
+new Chart(document.getElementById('cProt'),{type:'bar',
+ data:{labels:["16/06", "19/06", "20/06", "21/06", "22/06", "23/06", "24/06", "25/06", "26/06", "27/06", "28/06", "29/06", "30/06", "01/07", "02/07", "03/07", "04/07", "05/07", "06/07", "07/07", "08/07", "09/07", "10/07", "11/07", "12/07", "13/07", "14/07", "15/07", "16/07", "17/07"],datasets:[
+  {label:'Proteína (g)',data:[89.7, 122.5, 93.6, 65.6, 135.7, 142.4, 144.9, 139.3, 153.0, 104.3, 81.0, 101.8, 144.6, 140.1, 142.0, 109.1, 144.6, 116.2, 150.3, 139.0, 140.2, 121.8, 150.5, 131.2, 118.9, 118.2, 137.4, 116.4, 128.6, 105.7],
+   backgroundColor:corFds([89.7, 122.5, 93.6, 65.6, 135.7, 142.4, 144.9, 139.3, 153.0, 104.3, 81.0, 101.8, 144.6, 140.1, 142.0, 109.1, 144.6, 116.2, 150.3, 139.0, 140.2, 121.8, 150.5, 131.2, 118.9, 118.2, 137.4, 116.4, 128.6, 105.7].map(v=>v>=112?'rgba(74,222,128,.6)':'rgba(255,107,138,.55)')),borderRadius:3},
+  {label:'Meta',type:'line',data:new Array(30).fill(112),
+   borderColor:'rgba(232,234,246,.5)',borderWidth:1,borderDash:[4,4],pointRadius:0}]},
+ options:{responsive:true,maintainAspectRatio:false,
+  plugins:{legend:{display:false}},
+  scales:{x:{ticks:{maxTicksLimit:9,maxRotation:0},grid:{display:false}},
+   y:{grid:{color:'#2e3250'},ticks:{callback:v=>v+'g'}}}}});
+
+new Chart(document.getElementById('cCarb'),{type:'bar',
+ data:{labels:["16/06", "19/06", "20/06", "21/06", "22/06", "23/06", "24/06", "25/06", "26/06", "27/06", "28/06", "29/06", "30/06", "01/07", "02/07", "03/07", "04/07", "05/07", "06/07", "07/07", "08/07", "09/07", "10/07", "11/07", "12/07", "13/07", "14/07", "15/07", "16/07", "17/07"],datasets:[
+  {label:'Carboidrato (g)',data:[208.5, 248.0, 257.3, 203.4, 235.8, 237.5, 232.6, 235.3, 222.3, 343.2, 287.7, 262.9, 242.7, 241.5, 215.0, 247.2, 174.0, 208.5, 226.2, 244.4, 228.0, 179.8, 246.9, 250.6, 238.9, 295.9, 270.5, 242.1, 268.8, 348.6],
+   backgroundColor:corFds([208.5, 248.0, 257.3, 203.4, 235.8, 237.5, 232.6, 235.3, 222.3, 343.2, 287.7, 262.9, 242.7, 241.5, 215.0, 247.2, 174.0, 208.5, 226.2, 244.4, 228.0, 179.8, 246.9, 250.6, 238.9, 295.9, 270.5, 242.1, 268.8, 348.6].map(v=>v>=224?'rgba(74,222,128,.6)':'rgba(108,143,255,.55)')),borderRadius:3},
+  {label:'Referência',type:'line',data:new Array(30).fill(224),
+   borderColor:'rgba(232,234,246,.5)',borderWidth:1,borderDash:[4,4],pointRadius:0}]},
+ options:{responsive:true,maintainAspectRatio:false,
+  plugins:{legend:{display:false}},
+  scales:{x:{ticks:{maxTicksLimit:9,maxRotation:0},grid:{display:false}},
+   y:{grid:{color:'#2e3250'},ticks:{callback:v=>v+'g'}}}}});
+
+new Chart(document.getElementById('cGord'),{type:'bar',
+ data:{labels:["16/06", "19/06", "20/06", "21/06", "22/06", "23/06", "24/06", "25/06", "26/06", "27/06", "28/06", "29/06", "30/06", "01/07", "02/07", "03/07", "04/07", "05/07", "06/07", "07/07", "08/07", "09/07", "10/07", "11/07", "12/07", "13/07", "14/07", "15/07", "16/07", "17/07"],datasets:[
+  {label:'Gordura (g)',data:[53.5, 46.9, 49.5, 58.5, 27.6, 25.8, 26.0, 27.4, 27.1, 45.6, 43.6, 43.3, 24.2, 23.8, 19.2, 40.6, 38.4, 24.7, 22.5, 21.7, 20.1, 49.4, 33.8, 82.7, 31.6, 35.3, 43.0, 54.3, 47.9, 28.4],
+   backgroundColor:corFds([53.5, 46.9, 49.5, 58.5, 27.6, 25.8, 26.0, 27.4, 27.1, 45.6, 43.6, 43.3, 24.2, 23.8, 19.2, 40.6, 38.4, 24.7, 22.5, 21.7, 20.1, 49.4, 33.8, 82.7, 31.6, 35.3, 43.0, 54.3, 47.9, 28.4].map(v=>v>=45?'rgba(93,217,193,.6)':'rgba(255,107,138,.55)')),borderRadius:3},
+  {label:'Mínimo',type:'line',data:new Array(30).fill(45),
+   borderColor:'rgba(232,234,246,.5)',borderWidth:1,borderDash:[4,4],pointRadius:0}]},
+ options:{responsive:true,maintainAspectRatio:false,
+  plugins:{legend:{display:false}},
+  scales:{x:{ticks:{maxTicksLimit:9,maxRotation:0},grid:{display:false}},
+   y:{grid:{color:'#2e3250'},ticks:{callback:v=>v+'g'}}}}});
+
+new Chart(document.getElementById('cSono'),{type:'bar',
+ data:{labels:["24/06", "25/06", "26/06", "27/06", "28/06", "29/06", "30/06", "01/07", "02/07", "03/07", "04/07", "05/07", "06/07", "07/07", "08/07", "09/07", "10/07", "11/07", "13/07", "14/07", "15/07", "16/07", "17/07", "18/07", "19/07", "20/07", "21/07", "22/07", "23/07"],datasets:[
+  {type:'bar',label:'Horas',data:[7.05, 7.78, 8.13, 9.37, 8.77, 9.2, 7.73, 7.5, 8.08, 7.33, 8.88, 8.25, 7.73, 8.02, 8.82, 8.3, 8.87, 6.47, 7.67, 7.9, 8.32, 8.88, 9.17, 6.77, 9.18, 9.3, 7.9, 8.42, 7.63],yAxisID:'yh',borderRadius:2,barPercentage:.7,
+   backgroundColor:[75, 82, 88, 84, 83, 81, 68, 79, 88, 87, 81, 90, 77, 82, 77, 80, 80, 63, 86, 58, 84, 80, 87, 79, 62, 88, 86, 79, 77].map(s=>s>=80?'rgba(74,222,128,.5)':s>=60?'rgba(108,143,255,.45)':'rgba(248,113,113,.5)')},
+  {type:'line',label:'Score',data:[75, 82, 88, 84, 83, 81, 68, 79, 88, 87, 81, 90, 77, 82, 77, 80, 80, 63, 86, 58, 84, 80, 87, 79, 62, 88, 86, 79, 77],yAxisID:'ys',
+   borderColor:'rgba(255,255,255,.7)',borderWidth:1.5,pointRadius:0,tension:.3},
+  {type:'line',label:'80',data:new Array(29).fill(80),yAxisID:'ys',
+   borderColor:'rgba(74,222,128,.55)',borderWidth:1,borderDash:[4,4],pointRadius:0},
+  {type:'line',label:'70',data:new Array(29).fill(70),yAxisID:'ys',
+   borderColor:'rgba(108,143,255,.55)',borderWidth:1,borderDash:[4,4],pointRadius:0},
+  {type:'line',label:'60',data:new Array(29).fill(60),yAxisID:'ys',
+   borderColor:'rgba(248,113,113,.55)',borderWidth:1,borderDash:[4,4],pointRadius:0}]},
+ options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+  plugins:{legend:{display:false},
+   tooltip:{filter:t=>t.datasetIndex<2}},
+  scales:{x:{ticks:{maxTicksLimit:7,maxRotation:0},grid:{display:false}},
+   yh:{min:0,max:12,ticks:{stepSize:4,callback:v=>v+'h'},grid:{color:'#2e3250'}},
+   ys:{position:'right',min:0,max:100,ticks:{stepSize:10},grid:{display:false}}}}});
+
+new Chart(document.getElementById('cHrv'),{type:'line',
+ data:{labels:["25/05", "26/05", "27/05", "28/05", "29/05", "30/05", "31/05", "01/06", "02/06", "03/06", "04/06", "05/06", "06/06", "07/06", "08/06", "09/06", "10/06", "11/06", "12/06", "13/06", "14/06", "15/06", "16/06", "17/06", "18/06", "19/06", "20/06", "21/06", "22/06", "23/06", "24/06", "25/06", "26/06", "27/06", "28/06", "29/06", "30/06", "01/07", "02/07", "03/07", "04/07", "05/07", "06/07", "07/07", "08/07", "09/07", "10/07", "11/07", "12/07", "13/07", "14/07", "15/07", "16/07", "17/07", "18/07", "19/07", "20/07", "21/07", "22/07", "23/07"],datasets:[
+  {data:new Array(60).fill(50),borderColor:'rgba(74,222,128,.2)',borderWidth:1,
+   borderDash:[3,3],pointRadius:0,fill:'+1',backgroundColor:'rgba(74,222,128,.06)'},
+  {data:new Array(60).fill(38),borderColor:'rgba(74,222,128,.2)',borderWidth:1,
+   borderDash:[3,3],pointRadius:0},
+  {label:'VFC',data:[40, 42, 43, 44, 42, 40, 38, 38, 37, 37, 36, 37, 36, 38, 38, 38, 37, 37, 37, 38, 38, 38, 37, 37, 36, 36, 38, 38, 38, 40, 42, 44, 45, 46, 47, 48, 47, 46, 45, 45, 44, 44, 42, 43, 43, 43, 43, 42, 41, 43, 41, 41, 41, 41, 42, 40, 41, 43, 43, 42],borderColor:'#818cf8',borderWidth:2,pointRadius:0,tension:.35}]},
+ options:{responsive:true,maintainAspectRatio:false,
+  plugins:{legend:{display:false}},
+  scales:{x:{ticks:{maxTicksLimit:7,maxRotation:0},grid:{display:false}},
+   y:{min:25,max:60,ticks:{callback:v=>v+'ms'},grid:{color:'#2e3250'}}}}});
+
+
+// Histórico da composição corporal — 3 linhas em BANDAS verticais separadas
+// (cada série tem eixo oculto próprio → topo: peso · meio: músculo · base: %gordura)
+// Rótulos de dados carregam os valores exatos; a forma mostra a tendência.
+new Chart(document.getElementById('cBio'),{type:'line',
+ plugins:[ChartDataLabels],
+ data:{labels:["08/10/25", "05/11/25", "10/12/25", "21/01/26", "18/06/26", "17/07/26"],datasets:[
+  {label:'Peso (kg)',data:[56.7, 57.0, 56.5, 57.6, 55.7, 55.5],yAxisID:'yp',
+   borderColor:'#6c8fff',backgroundColor:'rgba(108,143,255,.12)',borderWidth:2.5,
+   pointRadius:4,pointBackgroundColor:'#6c8fff',tension:.3,fill:true,
+   datalabels:{align:'top',offset:7,color:'#a9befc',font:{weight:'700',size:10.5}}},
+  {label:'Massa muscular (kg)',data:[26.4, 27.0, 27.2, 27.4, 25.9, 26.3],yAxisID:'ym',
+   borderColor:'#ff6b8a',borderWidth:2.5,pointRadius:4,pointBackgroundColor:'#ff6b8a',tension:.3,
+   datalabels:{align:'top',offset:7,color:'#ff9db2',font:{weight:'700',size:10.5}}},
+  {label:'% gordura',data:[16.7, 15.6, 14.8, 15.5, 17.0, 15.9],yAxisID:'yg',
+   borderColor:'#ffbb44',borderWidth:2,borderDash:[6,3],pointRadius:4,
+   pointBackgroundColor:'#ffbb44',tension:.3,
+   datalabels:{align:'bottom',offset:7,color:'#ffd28a',font:{weight:'700',size:10.5},formatter:v=>v+'%'}}]},
+ options:{responsive:true,maintainAspectRatio:false,
+  layout:{padding:{top:18,bottom:14,left:8,right:8}},
+  plugins:{legend:{position:'top',labels:{boxWidth:8,padding:10}},datalabels:{clip:false}},
+  scales:{
+   x:{grid:{display:false},ticks:{font:{size:9}}},
+   yp:{min:47.1,max:58.77,display:false},
+   ym:{min:22.23,max:30.57,display:false},
+   yg:{min:13.58,max:25.8,display:false}}}});
+</script>
+</body>
+</html>
